@@ -3,42 +3,66 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import argparse
 import os
-import horovod.tensorflow.keras as hvd
-import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Lambda, Dense, Flatten
-from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras import backend as K
-from tensorflow.keras.losses import binary_crossentropy
-from tensorflow.keras import layers
+
+
 from sklearn import preprocessing
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import train_test_split
 from scipy.stats import norm
-from tensorflow.keras.layers import Input, Dropout, BatchNormalization, Activation
+
 
 
 
 line_style = {
+    'CDF CWoLa':'dotted',
+    'CDF NF':'dotted',
+    'CDF AE':'dotted',
+    'Gaussian NF':'-',
+    'Gaussian AE':'-',
+    'Gaussian CWoLa':'-',
+
+    r'$(\tau_1,\tau_2/\tau_1)$ CWoLa':'dotted',
+    r'$(\tau_1,\tau_2/\tau_1)$ NF':'dotted',
+    r'$(\tau_1,\tau_2/\tau_1)$ AE':'dotted',
+    r'$(\tau_1,\tau_2)$ NF':'-',
+    r'$(\tau_1,\tau_2)$ AE':'-',
+    r'$(\tau_1,\tau_2)$ CWoLa':'-',
+
+
     'signal':'dotted',
     'background':'-',
+
 }
 
 
 colors = {
     'signal':'black',
     'background':'#d95f02',
+    
+    'CDF CWoLa':'#7570b3',
+    'Gaussian CWoLa':'#7570b3',
+    'CDF NF':'#d95f02',
+    'Gaussian NF':'#d95f02',
+    'CDF AE':'#1b9e77',
+    'Gaussian AE':'#1b9e77',
+
+
+    r'$(\tau_1,\tau_2/\tau_1)$ CWoLa':'#7570b3',
+    r'$(\tau_1,\tau_2)$ CWoLa':'#7570b3',
+    r'$(\tau_1,\tau_2/\tau_1)$ NF':'#d95f02',
+    r'$(\tau_1,\tau_2)$ NF':'#d95f02',
+    r'$(\tau_1,\tau_2/\tau_1)$ AE':'#1b9e77',
+    r'$(\tau_1,\tau_2)$ AE':'#1b9e77',
 }   
 
 
-
-
-def DataGenerator(num_dim,nbkg=1000000,nsig=1000):
+def DataGenerator(num_dim,nbkg=100000,nsig=10000):
     x_b = np.random.normal(num_dim*[0.],num_dim*[1.],size=(nbkg,num_dim))
-    x_s = np.random.normal(num_dim*[2.],num_dim*[1.],(nsig,num_dim))
+    x_s = np.random.normal(num_dim*[1.],num_dim*[1.],(nsig,num_dim))
     cdf_s = norm.cdf(x_s)
     cdf_b = norm.cdf(x_b)
-    return x_b, x_s, cdf_s, cdf_b
+    return x_b, x_s, cdf_b, cdf_s
+
 
 def FormatFig(xlabel,ylabel,ax0):
     #Limit number of digits in ticks
@@ -181,37 +205,4 @@ def HistRoutine(feed_dict,xlabel='',ylabel='',reference_name='Geant4',logy=False
         
 
     return fig,ax0
-
-def AE(NFEAT,NLAYERS,LAYERSIZE,ENCODESIZE):
-    inputs = Input((NFEAT, ))
-    layer = Dense(LAYERSIZE[0], activation='relu', use_bias=False)(inputs)
-    #Encoder
-    for il in range(1,NLAYERS):
-        layer = Dense(LAYERSIZE[il], activation='linear', use_bias=False)(layer)
-        #layer = BatchNormalization()(layer)
-        layer = Activation('relu')(layer)
-
-    layer = Dense(ENCODESIZE, activation='linear', use_bias=False)(layer)
-    #Decoder
-    for il in range(NLAYERS):
-        layer = Dense(LAYERSIZE[NLAYERS-il-1], activation='linear', use_bias=False)(layer)
-        #layer = BatchNormalization()(layer)
-        layer = Activation('relu')(layer)
-    #layer = Dropout(0.25)(layer)
-    outputs = Dense(NFEAT, activation='linear', use_bias=False)(layer)
-
-    return inputs,outputs
-
-
-
-
-def Classifier(NFEAT,NLAYERS,LAYERSIZE):
-    inputs = Input((NFEAT, ))
-    layer = Dense(LAYERSIZE[0], activation='relu')(inputs)
-    for il in range(1,NLAYERS):
-        layer = Dense(LAYERSIZE[il], activation='linear')(layer)
-        #layer = BatchNormalization()(layer)
-        layer = Activation('relu')(layer)
-    outputs = Dense(1, activation='sigmoid')(layer)
-    return inputs,outputs
 
