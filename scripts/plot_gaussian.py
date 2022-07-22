@@ -105,4 +105,4 @@ plt.plot(x,1-x,color='black',linestyle='-')
     
 plt.ylim([-0.25, 1.1])
 plt.legend(frameon=False,fontsize=12,ncol=3)
-fig.savefig('{}/{}.pdf'.format(plot_folder,"ROC_gaus"))
+fig.savefig('{}/{}.png'.format(plot_folder,"ROC_gaus"))
