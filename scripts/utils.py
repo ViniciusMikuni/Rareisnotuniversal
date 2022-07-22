@@ -20,6 +20,10 @@ line_style = {
     'Gaussian NF':'-',
     'Gaussian AE':'-',
     'Gaussian CWoLa':'-',
+    'tanh NF':'dashdot',
+    'tanh AE':'dashdot',
+    'tanh CWoLa':'dashdot',
+
 
     r'$(\tau_1,\tau_2/\tau_1)$ CWoLa':'dotted',
     r'$(\tau_1,\tau_2/\tau_1)$ NF':'dotted',
@@ -29,15 +33,15 @@ line_style = {
     r'$(\tau_1,\tau_2)$ CWoLa':'-',
 
 
-    'signal':'dotted',
-    'background':'-',
+    'signal':'-',
+    'background':'dotted',
 
 }
 
 
 colors = {
-    'signal':'black',
-    'background':'#d95f02',
+    'signal':'#d95f02',
+    'background':'black',
     
     'CDF CWoLa':'#7570b3',
     'Gaussian CWoLa':'#7570b3',
@@ -45,6 +49,11 @@ colors = {
     'Gaussian NF':'#d95f02',
     'CDF AE':'#1b9e77',
     'Gaussian AE':'#1b9e77',
+
+    'tanh CWoLa':'#7570b3',
+    'tanh NF':'#d95f02',
+    'tanh AE':'#1b9e77',
+
 
 
     r'$(\tau_1,\tau_2/\tau_1)$ CWoLa':'#7570b3',
@@ -57,11 +66,28 @@ colors = {
 
 
 def DataGenerator(num_dim,nbkg=100000,nsig=10000):
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
     x_b = np.random.normal(num_dim*[0.],num_dim*[1.],size=(nbkg,num_dim))
     x_s = np.random.normal(num_dim*[1.],num_dim*[1.],(nsig,num_dim))
+    # scaler.fit(x_b)
+    # x_b=scaler.transform(x_b)
+    # x_s=scaler.transform(x_s)
+    
     cdf_s = norm.cdf(x_s)
     cdf_b = norm.cdf(x_b)
-    return x_b, x_s, cdf_b, cdf_s
+    # scaler.fit(cdf_b)
+    # cdf_b=scaler.transform(cdf_b)
+    # cdf_s=scaler.transform(cdf_s)
+    
+    tanh_s = np.tanh(x_s+2)
+    tanh_b = np.tanh(x_b+2)
+    scaler.fit(tanh_b)
+    tanh_b=scaler.transform(tanh_b)
+    tanh_s=scaler.transform(tanh_s)
+
+    
+    return x_b, x_s, cdf_b, cdf_s, tanh_b,tanh_s
 
 
 def FormatFig(xlabel,ylabel,ax0):
@@ -91,11 +117,9 @@ def SetStyle():
     rc('legend', fontsize=15)
 
     # #
-    mpl.rcParams.update({'font.size': 19})
+
     #mpl.rcParams.update({'legend.fontsize': 18})
     mpl.rcParams['text.usetex'] = False
-    mpl.rcParams.update({'xtick.labelsize': 18}) 
-    mpl.rcParams.update({'ytick.labelsize': 18}) 
     mpl.rcParams.update({'axes.labelsize': 18}) 
     mpl.rcParams.update({'legend.frameon': False}) 
     mpl.rcParams.update({'lines.linewidth': 2})
@@ -103,10 +127,13 @@ def SetStyle():
     import matplotlib.pyplot as plt
     import mplhep as hep
     hep.set_style(hep.style.CMS)
-    hep.style.use("CMS") 
+    hep.style.use("CMS")
+    plt.rcParams["font.family"] = "serif"
+    mpl.rcParams.update({'font.size': 19})
+
 
 def SetGrid(ratio=True):
-    fig = plt.figure(figsize=(9, 9))
+    fig = plt.figure(figsize=(9, 6.7))
     if ratio:
         gs = gridspec.GridSpec(2, 1, height_ratios=[3,1]) 
         gs.update(wspace=0.025, hspace=0.1)
@@ -123,8 +150,8 @@ def SetFig(xlabel,ylabel):
     ax0.tick_params(direction="in",which="both")    
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
-    plt.xlabel(xlabel,fontsize=20)
-    plt.ylabel(ylabel,fontsize=20)
+    plt.xlabel(xlabel,fontsize=18)
+    plt.ylabel(ylabel,fontsize=18)
     
     ax0.minorticks_on()
     return fig, ax0
@@ -173,7 +200,7 @@ def HistRoutine(feed_dict,xlabel='',ylabel='',reference_name='Geant4',logy=False
 
     
     if binning is None:
-        binning = np.linspace(np.quantile(feed_dict[reference_name],0.0),np.quantile(feed_dict[reference_name],1),10)
+        binning = np.linspace(np.quantile(feed_dict[reference_name],0.0),np.quantile(feed_dict[reference_name],1),20)
         
     xaxis = [(binning[i] + binning[i+1])/2.0 for i in range(len(binning)-1)]
     reference_hist,_ = np.histogram(feed_dict[reference_name],bins=binning,density=True)
@@ -191,7 +218,7 @@ def HistRoutine(feed_dict,xlabel='',ylabel='',reference_name='Geant4',logy=False
     if logy:
         ax0.set_yscale('log')
 
-    ax0.legend(loc=label_loc,fontsize=16,ncol=1)        
+    ax0.legend(loc=label_loc,fontsize=18,ncol=1)        
     if plot_ratio:
         FormatFig(xlabel = "", ylabel = ylabel,ax0=ax0) 
         plt.ylabel('Difference. (%)')
