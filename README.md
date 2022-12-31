@@ -2,6 +2,10 @@
 In this repository, the implementation of the studies presented in the paper: Anomaly Detection under Coordinate Transformations is preseented.
 
 
+[![DOI](https://zenodo.org/badge/513679269.svg)](https://zenodo.org/badge/latestdoi/513679269)
+
+
+
 [Tensorflow 2.6.0](https://www.tensorflow.org/) was used to implement all models
 
 ![](./assets/ROC_gaus.png)
